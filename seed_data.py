@@ -1,7 +1,3 @@
-"""
-Run this script to populate the database with sample data:
-    python manage.py shell < seed_data.py
-"""
 import os
 import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'dish_recommendation.settings')
@@ -14,12 +10,12 @@ User = get_user_model()
 
 print("Seeding database...")
 
-# ── Superuser ──────────────────────────────────────────────────────────────
+#Superuser
 if not User.objects.filter(username='admin').exists():
     User.objects.create_superuser('admin', 'admin@example.com', 'admin123')
     print("  Created superuser: admin / admin123")
 
-# ── Sample users ───────────────────────────────────────────────────────────
+#Sample users
 users = []
 for name in ['alice', 'bob', 'carol', 'dave']:
     u, created = User.objects.get_or_create(username=name, defaults={
@@ -32,7 +28,7 @@ for name in ['alice', 'bob', 'carol', 'dave']:
     if created:
         print(f"  Created user: {name} / pass1234")
 
-# ── Categories ─────────────────────────────────────────────────────────────
+#Categories
 categories_data = [
     ('Chinese',    'Traditional and modern Chinese cuisine', '🍜', 1),
     ('Italian',    'Pasta, pizza, and more',                 '🍕', 2),
@@ -51,7 +47,7 @@ for name, desc, icon, order in categories_data:
     category_objs[name] = cat
 print(f"  Created {len(category_objs)} categories")
 
-# ── Dishes ─────────────────────────────────────────────────────────────────
+#Dishes
 dishes_data = [
     # (name, category, description, price, is_hot)
     ('Kung Pao Chicken',    'Chinese',  'Spicy stir-fried chicken with peanuts and chillies.',        12.50, True),
@@ -87,7 +83,7 @@ for name, cat_name, desc, price, is_hot in dishes_data:
     item_objs.append(item)
 print(f"  Created {len(item_objs)} dishes")
 
-# ── Sample ratings ─────────────────────────────────────────────────────────
+#Sample ratings
 ratings_data = [
     # (user_index, item_index, rating, comment)
     (0, 0,  5, 'Absolutely delicious! The spice level was perfect.'),
@@ -120,7 +116,7 @@ for user_idx, item_idx, rating, comment in ratings_data:
         item_objs[item_idx].update_avg_rating()
 print(f"  Created {len(ratings_data)} ratings")
 
-# ── Sample forum posts ─────────────────────────────────────────────────────
+#Sample
 posts_data = [
     (0, 'Best ramen spots recommendation', 'I\'ve been on a ramen quest lately. Tonkotsu is my favourite — that rich pork broth is unmatched. Has anyone tried making it at home?'),
     (1, 'Hot pot etiquette guide', 'First time at a hot pot restaurant and I was completely lost! Here are some tips I picked up so you don\'t make the same mistakes.'),
@@ -134,7 +130,7 @@ for user_idx, title, content in posts_data:
     )
 print(f"  Created {len(posts_data)} forum posts")
 
-# ── System config ──────────────────────────────────────────────────────────
+#System config
 SystemConfig.objects.get_or_create(
     config_key='site_name',
     defaults={'value': 'Dish Discovery', 'description': 'Name of the platform'}

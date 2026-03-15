@@ -4,7 +4,6 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class User(AbstractUser):
-    """Extended user model with avatar and role"""
     ROLE_CHOICES = [('user', 'User'), ('admin', 'Admin')]
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='user')
@@ -14,7 +13,6 @@ class User(AbstractUser):
 
 
 class Category(models.Model):
-    """Dish categories e.g. Chinese, Italian"""
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
     icon = models.CharField(max_length=50, blank=True)
@@ -29,7 +27,6 @@ class Category(models.Model):
 
 
 class Item(models.Model):
-    """A dish/menu item"""
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='items')
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
@@ -46,7 +43,6 @@ class Item(models.Model):
         return self.name
 
     def update_avg_rating(self):
-        """Recalculate average rating from all user ratings"""
         ratings = self.ratings.all()
         if ratings.exists():
             self.avg_rating = sum(r.rating for r in ratings) / ratings.count()
@@ -56,7 +52,6 @@ class Item(models.Model):
 
 
 class UserRating(models.Model):
-    """A user's rating (1-5) and optional comment on a dish"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ratings')
     item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='ratings')
     rating = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
@@ -73,7 +68,6 @@ class UserRating(models.Model):
 
 
 class UserCollection(models.Model):
-    """A user's saved/favourited dish"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='collections')
     item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='collected_by')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -87,7 +81,6 @@ class UserCollection(models.Model):
 
 
 class ForumPost(models.Model):
-    """A community forum post, optionally linked to a dish"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     item = models.ForeignKey(Item, on_delete=models.SET_NULL, null=True, blank=True, related_name='posts')
     title = models.CharField(max_length=200)
@@ -103,7 +96,6 @@ class ForumPost(models.Model):
 
 
 class ForumReply(models.Model):
-    """A reply to a forum post"""
     post = models.ForeignKey(ForumPost, on_delete=models.CASCADE, related_name='replies')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='replies')
     content = models.TextField()
@@ -117,7 +109,6 @@ class ForumReply(models.Model):
 
 
 class Banner(models.Model):
-    """Homepage promotional banner"""
     title = models.CharField(max_length=200)
     image_url = models.ImageField(upload_to='banners/', blank=True, null=True)
     link_url = models.URLField(blank=True)
@@ -132,7 +123,6 @@ class Banner(models.Model):
 
 
 class SystemConfig(models.Model):
-    """Key-value system configuration"""
     config_key = models.CharField(max_length=100, unique=True)
     value = models.TextField()
     description = models.TextField(blank=True)

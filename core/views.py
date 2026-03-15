@@ -10,17 +10,7 @@ import json
 from .models import User, Category, Item, UserRating, UserCollection, ForumPost, ForumReply, Banner
 from .forms import RegisterForm, LoginForm, RatingForm, ForumPostForm, ForumReplyForm, ProfileForm
 
-
-# ─── Recommendation Engine ────────────────────────────────────────────────────
-
 def get_recommendations(user, limit=8):
-    """
-    Simple user-based collaborative filtering:
-    1. Find users who rated similar items highly (similarity > 0)
-    2. Collect items those users liked that the current user hasn't rated
-    3. Score by weighted average rating from similar users
-    Falls back to top-rated items if not enough ratings exist.
-    """
     user_ratings = UserRating.objects.filter(user=user)
     if user_ratings.count() < 2:
         # Cold start: return hot/top-rated items not yet rated by user
@@ -60,7 +50,6 @@ def get_recommendations(user, limit=8):
                 scores.setdefault(item_id, []).append(similarity * rating)
 
     if not scores:
-        # Fallback
         rated_ids = list(my_item_ids)
         return Item.objects.exclude(id__in=rated_ids).order_by('-avg_rating')[:limit]
 
@@ -68,12 +57,9 @@ def get_recommendations(user, limit=8):
     ranked = sorted(scores.items(), key=lambda x: sum(x[1]) / len(x[1]), reverse=True)
     top_ids = [item_id for item_id, _ in ranked[:limit]]
 
-    # Preserve ranking order
     items = {item.id: item for item in Item.objects.filter(id__in=top_ids)}
     return [items[i] for i in top_ids if i in items]
 
-
-# ─── Auth Views ───────────────────────────────────────────────────────────────
 
 def register_view(request):
     if request.user.is_authenticated:
@@ -112,8 +98,6 @@ def logout_view(request):
     messages.info(request, 'You have been logged out.')
     return redirect('home')
 
-
-# ─── Main Pages ───────────────────────────────────────────────────────────────
 
 def home_view(request):
     hot_items = Item.objects.filter(is_hot=True).order_by('-avg_rating')[:6]
@@ -161,7 +145,6 @@ def dishes_view(request):
     }
     items = items.order_by(sort_options.get(sort, '-created_at'))
 
-    # Mark collected items for logged-in user
     collected_ids = set()
     if request.user.is_authenticated:
         collected_ids = set(
@@ -253,8 +236,6 @@ def profile_view(request):
     return render(request, 'core/profile.html', context)
 
 
-# ─── Forum Views ──────────────────────────────────────────────────────────────
-
 def forum_view(request):
     """Community forum (S1)"""
     posts = ForumPost.objects.select_related('user', 'item').annotate(
@@ -307,12 +288,9 @@ def about_view(request):
     return render(request, 'core/about.html')
 
 
-# ─── AJAX Endpoints ───────────────────────────────────────────────────────────
-
 @login_required
 @require_POST
 def toggle_collection(request, pk):
-    """AJAX: toggle save/unsave a dish"""
     item = get_object_or_404(Item, pk=pk)
     collection, created = UserCollection.objects.get_or_create(user=request.user, item=item)
     if not created:
@@ -324,7 +302,6 @@ def toggle_collection(request, pk):
 @login_required
 @require_POST
 def rate_dish_ajax(request, pk):
-    """AJAX: submit a star rating"""
     item = get_object_or_404(Item, pk=pk)
     try:
         data = json.loads(request.body)
@@ -350,7 +327,6 @@ def rate_dish_ajax(request, pk):
 
 @require_POST
 def search_ajax(request):
-    """AJAX: live search suggestions"""
     query = request.POST.get('q', '').strip()
     if len(query) < 2:
         return JsonResponse({'results': []})
