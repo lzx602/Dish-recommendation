@@ -1,0 +1,153 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block title %}Home{% endblock %}
+{% block page_bg_style %}style="background-image: url('{% static 'photo1.jpg' %}')"{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<div style="padding: 4rem 0 3rem;">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <h1 class="fw-bold mb-3" style="font-family:'Playfair Display',serif; color:#fff; font-size:2.8rem; text-shadow:0 2px 12px rgba(0,0,0,0.5);">
+                    <i class="bi bi-stars text-warning"></i> Intelligent Dish Discovery
+                </h1>
+                <p class="lead mb-4" style="color:rgba(255,255,255,0.88);">
+                    Discover dishes perfectly matched to your taste. Rate meals, get smart recommendations, and connect with fellow food lovers.
+                </p>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="{% url 'dishes' %}" class="btn btn-warning btn-lg fw-bold">
+                        <i class="bi bi-grid"></i> Browse Dishes
+                    </a>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'recommendations' %}" class="btn btn-outline-light btn-lg">
+                        <i class="bi bi-magic"></i> My Recommendations
+                    </a>
+                    {% else %}
+                    <a href="{% url 'register' %}" class="btn btn-outline-light btn-lg">
+                        <i class="bi bi-person-plus"></i> Get Started
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-2 pb-5">
+    <!-- Category quick filter -->
+    <div class="mb-4 d-flex gap-2 flex-wrap">
+        <a href="{% url 'dishes' %}" class="btn btn-sm"
+           style="background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);">
+            <i class="bi bi-grid-3x3-gap"></i> All
+        </a>
+        {% for cat in categories %}
+        <a href="{% url 'dishes' %}?category={{ cat.id }}"
+           class="btn btn-sm"
+           style="background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);">
+            {{ cat.icon }} {{ cat.name }}
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Personalised recommendations -->
+    {% if user.is_authenticated and recommendations %}
+    <h2 class="section-title"><i class="bi bi-magic"></i> Today's Picks for You</h2>
+    <div class="row g-3 mb-5">
+        {% for item in recommendations %}
+        <div class="col-6 col-md-3">
+            <div class="card dish-card h-100" onclick="window.location='{% url 'dish_detail' item.pk %}'">
+                {% if item.image_url %}
+                <img src="{{ item.image_url.url }}" class="dish-img" alt="{{ item.name }}">
+                {% else %}
+                <div class="dish-img-placeholder"><span style="font-size:3rem;">🍽️</span></div>
+                {% endif %}
+                <div class="card-body p-3">
+                    {% if item.is_hot %}<span class="badge badge-hot mb-1">🔥 Hot</span>{% endif %}
+                    <h6 class="card-title mb-1 fw-bold">{{ item.name }}</h6>
+                    <div class="text-warning small" aria-label="{{ item.avg_rating|floatformat:1 }} stars">
+                        {% for i in "12345" %}{% if forloop.counter <= item.avg_rating|floatformat:"0"|add:"0" %}★{% else %}☆{% endif %}{% endfor %}
+                        <span class="text-muted ms-1">{{ item.avg_rating|floatformat:1 }}</span>
+                    </div>
+                    {% if item.price %}<p class="text-muted small mb-0 mt-1">£{{ item.price }}</p>{% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Hot Picks -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="section-title mb-0"><i class="bi bi-fire"></i> Hot Picks</h2>
+        <a href="{% url 'dishes' %}?sort=rating" style="color:var(--accent); text-decoration:none;">View all →</a>
+    </div>
+    <div class="row g-3 mb-5">
+        {% for item in hot_items %}
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="card dish-card h-100" onclick="window.location='{% url 'dish_detail' item.pk %}'">
+                {% if item.image_url %}
+                <img src="{{ item.image_url.url }}" class="dish-img" alt="{{ item.name }}">
+                {% else %}
+                <div class="dish-img-placeholder"><span style="font-size:2.5rem;">🍽️</span></div>
+                {% endif %}
+                <div class="card-body p-2">
+                    <span class="badge badge-hot">🔥 Hot</span>
+                    <h6 class="card-title mb-0 mt-1 small fw-bold">{{ item.name }}</h6>
+                    <div class="text-warning" style="font-size:0.75rem;">★ {{ item.avg_rating|floatformat:1 }}</div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12" style="color:rgba(255,255,255,0.7);">No hot dishes yet.</div>
+        {% endfor %}
+    </div>
+
+    <!-- New Arrivals -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="section-title mb-0"><i class="bi bi-stars"></i> New Arrivals</h2>
+        <a href="{% url 'dishes' %}?sort=newest" style="color:var(--accent); text-decoration:none;">Explore →</a>
+    </div>
+    <div class="row g-3 mb-5">
+        {% for item in new_items %}
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="card dish-card h-100" onclick="window.location='{% url 'dish_detail' item.pk %}'">
+                {% if item.image_url %}
+                <img src="{{ item.image_url.url }}" class="dish-img" alt="{{ item.name }}">
+                {% else %}
+                <div class="dish-img-placeholder"><span style="font-size:2.5rem;">🆕</span></div>
+                {% endif %}
+                <div class="card-body p-2">
+                    <span class="badge bg-success" style="font-size:0.65rem;">New</span>
+                    <h6 class="card-title mb-0 mt-1 small fw-bold">{{ item.name }}</h6>
+                    {% if item.category %}<small class="text-muted">{{ item.category.name }}</small>{% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12" style="color:rgba(255,255,255,0.7);">No dishes yet.</div>
+        {% endfor %}
+    </div>
+
+    <div class="row g-3 mt-2 align-items-stretch">
+    <div class="col-12 col-md-4">
+        <div class="card text-center p-4 h-100" style="border-left:4px solid var(--accent);">
+            <h5 class="fw-bold mt-2">Personalised</h5>
+            <p class="text-muted small">The more you rate, the smarter your recommendations become.</p>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card text-center p-4 h-100" style="border-left:4px solid var(--accent);">
+            <h5 class="fw-bold mt-2">Community Trust</h5>
+            <p class="text-muted small">Honest reviews from people who actually ate the dish.</p>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card text-center p-4 h-100" style="border-left:4px solid var(--accent);">
+            <h5 class="fw-bold mt-2">Easy Discovery</h5>
+            <p class="text-muted small">Search and filter to find exactly what you're craving.</p>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}

@@ -1,0 +1,188 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block title %}My Profile{% endblock %}
+{% block page_bg_style %}style="background-image: url('{% static 'photo6.jpg' %}')"{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="section-title"><i class="bi bi-person-circle"></i> Personal Information</h1>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card p-4">
+                <div class="text-center mb-3">
+                    {% if request.user.avatar %}
+                    <img src="{{ request.user.avatar.url }}" alt="Profile picture"
+                         class="rounded-circle" style="width:100px;height:100px;object-fit:cover;"
+                         id="avatarPreview">
+                    {% else %}
+                    <div id="avatarPreview" style="width:100px;height:100px;border-radius:50%;background:var(--primary);color:#fff;font-size:2.5rem;font-weight:bold;display:flex;align-items:center;justify-content:center;margin:0 auto;">
+                        {{ request.user.username|first|upper }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <form method="post" enctype="multipart/form-data" novalidate>
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{ form.avatar.id_for_label }}" class="form-label small fw-semibold">Profile picture</label>
+                        {{ form.avatar }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Username</label>
+                        <input type="text" class="form-control" value="{{ request.user.username }}" disabled
+                               aria-label="Username (cannot be changed)">
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.first_name.id_for_label }}" class="form-label small fw-semibold">First name</label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}<div class="text-danger small" role="alert">{{ form.first_name.errors.0 }}</div>{% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.last_name.id_for_label }}" class="form-label small fw-semibold">Last name</label>
+                        {{ form.last_name }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.email.id_for_label }}" class="form-label small fw-semibold">Email address</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}<div class="text-danger small" role="alert">{{ form.email.errors.0 }}</div>{% endif %}
+                    </div>
+                    <button type="submit" class="btn btn-accent w-100">
+                        <i class="bi bi-check-circle"></i> Save Changes
+                    </button>
+                </form>
+
+                <hr class="my-3">
+                <div class="row text-center g-2">
+                    <div class="col-6">
+                        <div class="fw-bold fs-4" style="color:var(--primary);">{{ ratings.count }}</div>
+                        <div class="text-muted small">Ratings</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="fw-bold fs-4" style="color:var(--primary);">{{ collections.count }}</div>
+                        <div class="text-muted small">Saved</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card p-3">
+            <ul class="nav nav-tabs mb-3" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="ratings-tab" data-bs-toggle="tab"
+                            data-bs-target="#ratingsPanel" type="button" role="tab"
+                            aria-controls="ratingsPanel" aria-selected="true">
+                        <i class="bi bi-star"></i> Rating History
+                        <span class="badge bg-secondary ms-1">{{ ratings.count }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="collections-tab" data-bs-toggle="tab"
+                            data-bs-target="#collectionsPanel" type="button" role="tab"
+                            aria-controls="collectionsPanel" aria-selected="false">
+                        <i class="bi bi-bookmark"></i> Saved Dishes
+                        <span class="badge bg-secondary ms-1">{{ collections.count }}</span>
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="ratingsPanel" role="tabpanel" aria-labelledby="ratings-tab">
+                    <div class="d-flex gap-2 mb-3 flex-wrap align-items-center">
+                        <span class="text-muted small fw-semibold">Sort by:</span>
+                        <a href="?sort=date" class="btn btn-sm {% if request.GET.sort != 'rating' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">Up to date</a>
+                        <a href="?sort=rating" class="btn btn-sm {% if request.GET.sort == 'rating' %}btn-secondary{% else %}btn-outline-secondary{% endif %}">Popular</a>
+                        <a href="{% url 'forum' %}" class="btn btn-sm btn-outline-primary ms-auto">
+                            <i class="bi bi-pencil"></i> Post food sharing/topics
+                        </a>
+                    </div>
+
+                    {% if ratings %}
+                    <div class="list-group">
+                        {% for rating in ratings %}
+                        <a href="{% url 'dish_detail' rating.item.pk %}"
+                           class="list-group-item list-group-item-action d-flex gap-3 align-items-center py-3">
+                            {% if rating.item.image_url %}
+                            <img src="{{ rating.item.image_url.url }}" alt="{{ rating.item.name }}"
+                                 style="width:60px;height:60px;object-fit:cover;border-radius:8px;">
+                            {% else %}
+                            <div style="width:60px;height:60px;background:var(--light-bg);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;" aria-hidden="true">🍽️</div>
+                            {% endif %}
+                            <div class="flex-grow-1 min-w-0">
+                                <div class="fw-bold">{{ rating.item.name }}</div>
+                                <div class="text-warning" aria-label="{{ rating.rating }} stars">
+                                    {% for i in "12345" %}{% if forloop.counter <= rating.rating %}★{% else %}☆{% endif %}{% endfor %}
+                                    <span class="text-muted small ms-1">{{ rating.rating }}/5</span>
+                                </div>
+                                {% if rating.comment %}
+                                <div class="text-muted small text-truncate">{{ rating.comment }}</div>
+                                {% endif %}
+                            </div>
+                            <small class="text-muted text-nowrap">{{ rating.created_at|date:"M d, Y" }}</small>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <p class="text-muted mt-2">You haven't rated any dishes yet.</p>
+                        <a href="{% url 'dishes' %}" class="btn btn-accent btn-sm">Browse Dishes</a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="tab-pane fade" id="collectionsPanel" role="tabpanel" aria-labelledby="collections-tab">
+                    {% if collections %}
+                    <div class="row g-3">
+                        {% for col in collections %}
+                        <div class="col-6 col-sm-4">
+                            <div class="card dish-card h-100"
+                                 onclick="window.location='{% url 'dish_detail' col.item.pk %}'">
+                                {% if col.item.image_url %}
+                                <img src="{{ col.item.image_url.url }}" class="dish-img" alt="{{ col.item.name }}" style="height:120px;">
+                                {% else %}
+                                <div class="dish-img-placeholder" style="height:120px;">
+                                    <span style="font-size:2rem;" aria-hidden="true">🍽️</span>
+                                </div>
+                                {% endif %}
+                                <div class="card-body p-2">
+                                    <h6 class="small fw-bold mb-0">{{ col.item.name }}</h6>
+                                    <div class="text-warning" style="font-size:0.75rem;">★ {{ col.item.avg_rating|floatformat:1 }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <p class="text-muted mt-2">No saved dishes yet.</p>
+                        <a href="{% url 'dishes' %}" class="btn btn-accent btn-sm">Browse Dishes</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const avatarInput = document.querySelector('input[type="file"]');
+if (avatarInput) {
+    avatarInput.addEventListener('change', function () {
+        const file = this.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            const preview = document.getElementById('avatarPreview');
+            preview.outerHTML = `<img src="${e.target.result}" alt="Profile picture preview"
+                class="rounded-circle" id="avatarPreview"
+                style="width:100px;height:100px;object-fit:cover;display:block;margin:0 auto;">`;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+</script>
+{% endblock %}

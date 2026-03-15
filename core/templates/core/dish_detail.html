@@ -1,0 +1,234 @@
+{% extends 'core/base.html' %}
+{% block title %}{{ item.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'dishes' %}">Dishes</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ item.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        <!-- Dish image -->
+        <div class="col-md-5">
+            {% if item.image_url %}
+            <img src="{{ item.image_url.url }}" alt="{{ item.name }}"
+                 class="img-fluid rounded-3 shadow" style="width:100%; max-height:400px; object-fit:cover;">
+            {% else %}
+            <div class="dish-img-placeholder rounded-3 shadow" style="height:350px;">
+                <span style="font-size:6rem;" role="img" aria-label="Food">🍽️</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Dish info -->
+        <div class="col-md-7">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <h1 class="fw-bold mb-0">{{ item.name }}</h1>
+                {% if item.is_hot %}<span class="badge badge-hot fs-6">🔥 Hot</span>{% endif %}
+            </div>
+            {% if item.category %}
+            <span class="badge bg-secondary mb-2">{{ item.category.name }}</span>
+            {% endif %}
+
+            <!-- Average rating display -->
+            <div class="d-flex align-items-center gap-2 mb-3" aria-label="Average rating">
+                <div style="font-size: 1.5rem; color: #e8a020;">
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= item.avg_rating|floatformat:"0"|add:"0" %}★{% else %}☆{% endif %}
+                    {% endfor %}
+                </div>
+                <span class="fw-bold fs-5" id="avgRating">{{ item.avg_rating|floatformat:1 }}</span>
+                <span class="text-muted" id="ratingCount">({{ ratings.count }} rating{{ ratings.count|pluralize }})</span>
+            </div>
+
+            {% if item.price %}
+            <p class="fs-4 fw-bold mb-3" style="color: var(--accent);">£{{ item.price }}</p>
+            {% endif %}
+
+            {% if item.description %}
+            <p class="text-muted mb-3">{{ item.description }}</p>
+            {% endif %}
+
+            <!-- Action buttons -->
+            <div class="d-flex gap-2 mb-4 flex-wrap">
+                {% if user.is_authenticated %}
+                <button class="btn {% if is_collected %}btn-warning{% else %}btn-outline-secondary{% endif %}"
+                        id="collectBtn" data-item-id="{{ item.pk }}"
+                        aria-label="{% if is_collected %}Remove from saved{% else %}Save this dish{% endif %}">
+                    <i class="bi {% if is_collected %}bi-bookmark-fill{% else %}bi-bookmark{% endif %}"></i>
+                    {% if is_collected %}Saved{% else %}Save{% endif %}
+                </button>
+                <a href="{% url 'forum' %}" class="btn btn-outline-primary">
+                    <i class="bi bi-chat-dots"></i> Discuss
+                </a>
+                {% else %}
+                <a href="{% url 'login' %}" class="btn btn-accent">
+                    <i class="bi bi-star"></i> Log in to rate
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- Star Rating Form (AJAX) -->
+            {% if user.is_authenticated %}
+            <div class="card p-3" style="background: var(--light-bg);">
+                <h5 class="fw-bold mb-3">
+                    {% if user_rating %}Update your rating{% else %}Rate this dish{% endif %}
+                </h5>
+                <!-- Interactive stars -->
+                <div class="star-rating mb-3" role="group" aria-label="Rate this dish from 1 to 5 stars">
+                    {% for i in rating_range %}
+                    <span class="star {% if user_rating and i <= user_rating.rating %}active{% endif %}"
+                          data-value="{{ i }}"
+                          role="button"
+                          aria-label="{{ i }} star{% if i > 1 %}s{% endif %}"
+                          tabindex="0">★</span>
+                    {% endfor %}
+                    <span class="ms-2 text-muted small" id="ratingLabel">
+                        {% if user_rating %}Your rating: {{ user_rating.rating }}/5{% else %}Click to rate{% endif %}
+                    </span>
+                </div>
+                <div class="mb-3">
+                    <label for="commentInput" class="form-label small fw-semibold">Comment (optional)</label>
+                    <textarea id="commentInput" class="form-control" rows="3"
+                              placeholder="Share your thoughts...">{% if user_rating %}{{ user_rating.comment }}{% endif %}</textarea>
+                </div>
+                <button class="btn btn-accent" id="submitRating">
+                    <i class="bi bi-check-circle"></i>
+                    {% if user_rating %}Update Rating{% else %}Submit Rating{% endif %}
+                </button>
+                <div id="ratingMsg" class="mt-2 small"></div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- All Reviews -->
+    <div class="mt-5">
+        <h2 class="section-title"><i class="bi bi-chat-left-quote"></i> Reviews ({{ ratings.count }})</h2>
+        {% for r in ratings %}
+        <div class="card mb-3 p-3">
+            <div class="d-flex align-items-center gap-3 mb-2">
+                <div style="width:40px; height:40px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:bold;">
+                    {{ r.user.username|first|upper }}
+                </div>
+                <div>
+                    <div class="fw-bold">{{ r.user.username }}</div>
+                    <div class="text-warning small" aria-label="Rating: {{ r.rating }} stars">
+                        {% for i in "12345" %}{% if forloop.counter <= r.rating %}★{% else %}☆{% endif %}{% endfor %}
+                    </div>
+                </div>
+                <small class="text-muted ms-auto">{{ r.created_at|date:"M d, Y" }}</small>
+            </div>
+            {% if r.comment %}<p class="mb-0 text-muted">{{ r.comment }}</p>{% endif %}
+        </div>
+        {% empty %}
+        <p class="text-muted">No reviews yet. Be the first to rate this dish!</p>
+        {% endfor %}
+    </div>
+
+    <!-- Related Dishes -->
+    {% if related_items %}
+    <div class="mt-5">
+        <h2 class="section-title"><i class="bi bi-grid"></i> More from {{ item.category.name }}</h2>
+        <div class="row g-3">
+            {% for related in related_items %}
+            <div class="col-6 col-md-3">
+                <div class="card dish-card h-100" onclick="window.location='{% url 'dish_detail' related.pk %}'">
+                    {% if related.image_url %}
+                    <img src="{{ related.image_url.url }}" class="dish-img" alt="{{ related.name }}">
+                    {% else %}
+                    <div class="dish-img-placeholder"><span style="font-size:2rem;">🍽️</span></div>
+                    {% endif %}
+                    <div class="card-body p-2">
+                        <h6 class="small fw-bold mb-0">{{ related.name }}</h6>
+                        <div class="text-warning" style="font-size:0.75rem;">★ {{ related.avg_rating|floatformat:1 }}</div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedRating = {% if user_rating %}{{ user_rating.rating }}{% else %}0{% endif %};
+const stars = document.querySelectorAll('.star');
+const label = document.getElementById('ratingLabel');
+
+// Star hover and click interaction
+stars.forEach(star => {
+    star.addEventListener('mouseover', function () {
+        const val = parseInt(this.dataset.value);
+        stars.forEach((s, i) => s.classList.toggle('active', i < val));
+    });
+    star.addEventListener('mouseout', function () {
+        stars.forEach((s, i) => s.classList.toggle('active', i < selectedRating));
+    });
+    star.addEventListener('click', function () {
+        selectedRating = parseInt(this.dataset.value);
+        label.textContent = `Your rating: ${selectedRating}/5`;
+        stars.forEach((s, i) => s.classList.toggle('active', i < selectedRating));
+    });
+    // Keyboard accessibility
+    star.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.click(); }
+    });
+});
+
+// Submit rating via AJAX
+document.getElementById('submitRating')?.addEventListener('click', function () {
+    if (!selectedRating) {
+        document.getElementById('ratingMsg').innerHTML = '<span class="text-warning">Please select a star rating first.</span>';
+        return;
+    }
+    const comment = document.getElementById('commentInput').value;
+    fetch(`/ajax/rate/{{ item.pk }}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ rating: selectedRating, comment: comment })
+    })
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('avgRating').textContent = data.avg_rating;
+        document.getElementById('ratingCount').textContent = `(${data.rating_count} rating${data.rating_count !== 1 ? 's' : ''})`;
+        const msg = document.getElementById('ratingMsg');
+        msg.innerHTML = '<span class="text-success"><i class="bi bi-check-circle"></i> Rating saved! Thank you.</span>';
+        document.getElementById('submitRating').textContent = 'Update Rating';
+        setTimeout(() => msg.innerHTML = '', 3000);
+    })
+    .catch(() => {
+        document.getElementById('ratingMsg').innerHTML = '<span class="text-danger">Error saving rating. Please try again.</span>';
+    });
+});
+
+// Collect/save button
+document.getElementById('collectBtn')?.addEventListener('click', function () {
+    fetch(`/ajax/collect/{{ item.pk }}/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === 'saved') {
+            this.className = 'btn btn-warning';
+            this.innerHTML = '<i class="bi bi-bookmark-fill"></i> Saved';
+            this.setAttribute('aria-label', 'Remove from saved');
+        } else {
+            this.className = 'btn btn-outline-secondary';
+            this.innerHTML = '<i class="bi bi-bookmark"></i> Save';
+            this.setAttribute('aria-label', 'Save this dish');
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,106 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block title %}About{% endblock %}
+{% block page_bg_style %}style="background-image: url('{% static 'photo5.jpg' %}')"{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h1 class="section-title"><i class="bi bi-info-circle"></i> About This Platform</h1>
+
+            <div class="card p-4 mb-4">
+                <h4 class="fw-bold mb-3" style="color:var(--primary);">
+                    Intelligent Dish Discovery & Recommendation Platform
+                </h4>
+                <p class="text-muted">
+                    This platform uses <strong>Collaborative Filtering</strong> to suggest dishes
+                    based on your behaviour and the preferences of users with similar tastes.
+                    The more you rate, the smarter your recommendations become.
+                </p>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="card p-4 h-100">
+                        <h5 class="fw-bold mt-2">Who is it for?</h5>
+                        <ul class="text-muted small ps-3">
+                            <li><strong>Busy Professionals / Students</strong> — who struggle to choose what to eat</li>
+                            <li><strong>Food Enthusiasts</strong> — who want to explore new tastes</li>
+                            <li><strong>Restaurant Administrators</strong> — who manage digital menus</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card p-4 h-100">
+                        <h5 class="fw-bold mt-2">Problems We Solve</h5>
+                        <ul class="text-muted small ps-3">
+                            <li><strong>Too many options</strong> — no more endless scrolling</li>
+                            <li><strong>Generic recommendations</strong> — your ratings change what you see</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-4 mb-4">
+                <h5 class="fw-bold mb-3" style="color:var(--primary);">
+                    <i class="bi bi-gear"></i> How the Recommendation Engine Works
+                </h5>
+                <ol class="text-muted ps-3">
+                    <li class="mb-2">You rate dishes (1–5 stars) as you use the platform.</li>
+                    <li class="mb-2">The system identifies other users with similar rating patterns (User-Based Collaborative Filtering).</li>
+                    <li class="mb-2">Dishes that similar users rated highly — but you haven't tried — are recommended to you.</li>
+                    <li class="mb-2">The more you rate, the more accurate your personalised list becomes.</li>
+                </ol>
+            </div>
+
+            <div class="card p-4">
+                <h5 class="fw-bold mb-3" style="color:var(--primary);">
+                    <i class="bi bi-shield-check"></i> Accessibility Commitment (WCAG 2.2)
+                </h5>
+                <div class="row g-2">
+                    <div class="col-12">
+                        <div class="d-flex gap-2 align-items-start">
+                            <span class="badge" style="background:var(--accent);flex-shrink:0;margin-top:2px;">✓</span>
+                            <span class="text-muted small"><strong>1.1.1 Non-text Content</strong> — All dish images include descriptive alt text for screen readers.</span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex gap-2 align-items-start">
+                            <span class="badge" style="background:var(--accent);flex-shrink:0;margin-top:2px;">✓</span>
+                            <span class="text-muted small"><strong>2.1.1 Keyboard Accessible</strong> — All interactive elements are fully navigable by keyboard.</span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex gap-2 align-items-start">
+                            <span class="badge" style="background:var(--accent);flex-shrink:0;margin-top:2px;">✓</span>
+                            <span class="text-muted small"><strong>2.5.8 Target Size Minimum</strong> — All interactive elements meet the minimum 24×24 CSS pixel target size.</span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex gap-2 align-items-start">
+                            <span class="badge" style="background:var(--accent);flex-shrink:0;margin-top:2px;">✓</span>
+                            <span class="text-muted small"><strong>3.3.2 Labels or Instructions</strong> — All form fields have clearly visible labels.</span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="d-flex gap-2 align-items-start">
+                            <span class="badge" style="background:var(--accent);flex-shrink:0;margin-top:2px;">✓</span>
+                            <span class="text-muted small"><strong>3.3.8 Accessible Authentication</strong> — Login supports copy-paste; no complex cognitive tests required.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <a href="{% url 'dishes' %}" class="btn btn-accent btn-lg me-2">
+                    <i class="bi bi-grid"></i> Browse Dishes
+                </a>
+                <a href="{% url 'register' %}" class="btn btn-outline-light btn-lg">
+                    <i class="bi bi-person-plus"></i> Join Now
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

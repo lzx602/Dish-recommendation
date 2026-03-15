@@ -1,0 +1,69 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block title %}My Recommendations{% endblock %}
+{% block page_bg_style %}style="background-image: url('{% static 'photo3.jpg' %}')"{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="section-title"><i class="bi bi-magic"></i> Smart Recommendations</h1>
+
+    {% if user_rating_count < 2 %}
+    <div class="alert alert-info" role="alert">
+        <i class="bi bi-info-circle"></i>
+        <strong>Rate more dishes to unlock personalised recommendations!</strong>
+        You've rated <strong>{{ user_rating_count }}</strong> dish{{ user_rating_count|pluralize }} so far.
+        Rate at least 2 dishes and we'll find dishes similar users loved.
+        <a href="{% url 'dishes' %}" class="alert-link ms-1">Browse dishes →</a>
+    </div>
+    {% else %}
+    <p class="mb-4" style="color:rgba(255,255,255,0.88);">
+        Based on your <strong>{{ user_rating_count }}</strong> ratings, here are dishes you're likely to enjoy:
+    </p>
+    {% endif %}
+
+    <div class="row g-3">
+        {% for item in recommended %}
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="card dish-card h-100">
+                <a href="{% url 'dish_detail' item.pk %}" class="text-decoration-none text-dark"
+                   aria-label="View {{ item.name }}">
+                    {% if item.image_url %}
+                    <img src="{{ item.image_url.url }}" class="dish-img" alt="{{ item.name }}">
+                    {% else %}
+                    <div class="dish-img-placeholder">
+                        <span style="font-size:3rem;" role="img" aria-label="Food">🍽️</span>
+                    </div>
+                    {% endif %}
+                    <div class="card-body p-3">
+                        <span class="badge" style="background:var(--primary);font-size:0.65rem;">Recommended</span>
+                        {% if item.is_hot %}<span class="badge badge-hot ms-1">🔥 Hot</span>{% endif %}
+                        <h6 class="card-title mb-1 mt-2 fw-bold">{{ item.name }}</h6>
+                        {% if item.category %}<small class="text-muted">{{ item.category.name }}</small>{% endif %}
+                        <div class="text-warning mt-1" aria-label="{{ item.avg_rating|floatformat:1 }} out of 5">
+                            {% for i in "12345" %}{% if forloop.counter <= item.avg_rating|floatformat:"0"|add:"0" %}★{% else %}☆{% endif %}{% endfor %}
+                            <span class="text-muted small">{{ item.avg_rating|floatformat:1 }}</span>
+                        </div>
+                        {% if item.price %}<p class="mb-0 mt-1 fw-bold" style="color:var(--accent);">£{{ item.price }}</p>{% endif %}
+                    </div>
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <div style="font-size:3rem;">🍽️</div>
+            <h5 class="mt-3" style="color:#fff;">No recommendations yet</h5>
+            <p style="color:rgba(255,255,255,0.7);">Start rating dishes and we'll personalise your feed!</p>
+            <a href="{% url 'dishes' %}" class="btn btn-accent mt-2">Browse & Rate Dishes</a>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if recommended %}
+    <div class="text-center mt-4">
+        <a href="{% url 'dishes' %}" class="btn btn-outline-light">
+            <i class="bi bi-grid"></i> Browse All Dishes
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

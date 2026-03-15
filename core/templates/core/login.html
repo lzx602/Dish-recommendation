@@ -1,0 +1,73 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block title %}Log In{% endblock %}
+{% block page_bg_style %}style="background-image: url('{% static 'photo7.jpg' %}')"{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="card shadow-lg" style="border-radius:16px;overflow:hidden;">
+                <div class="row g-0">
+                    <div class="col-md-5" style="background:linear-gradient(135deg,#1a3a5c,#2d6a9f);color:#fff;padding:3rem 2rem;">
+                        <span class="badge" style="background:var(--accent);font-size:0.75rem;">Diner Account</span>
+                        <h3 class="fw-bold mt-3" style="font-family:'Playfair Display',serif;">Welcome to log in</h3>
+                        <p class="text-white-50 mt-2">Sign in to access your personal taste profile and recommendations.</p>
+                        <div class="mt-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div>
+                                    <div class="fw-bold small">Create a personal taste profile</div>
+                                    <div class="text-white-50" style="font-size:0.75rem;">Tailored to your preferences</div>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <div>
+                                    <div class="fw-bold small">Record every satisfaction</div>
+                                    <div class="text-white-50" style="font-size:0.75rem;">Track your rating history</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-7 p-4 p-md-5">
+                        <h4 class="fw-bold mb-4" style="color:var(--primary);">Log In</h4>
+                        <form method="post" novalidate>
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="{{ form.username.id_for_label }}" class="form-label fw-semibold">
+                                    Username or email
+                                </label>
+                                {{ form.username }}
+                                {% if form.username.errors %}
+                                <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{ form.password.id_for_label }}" class="form-label fw-semibold">
+                                    Password
+                                </label>
+                                {{ form.password }}
+                                {% if form.password.errors %}
+                                <div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="rememberMe" name="remember">
+                                    <label class="form-check-label small" for="rememberMe">Remember to log in</label>
+                                </div>
+                                <a href="{% url 'register' %}" style="color:var(--accent);font-size:0.85rem;">
+                                    Don't have an account? Register
+                                </a>
+                            </div>
+                            <button type="submit" class="btn btn-accent w-100 py-2 fw-bold fs-5">
+                                Log in
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
