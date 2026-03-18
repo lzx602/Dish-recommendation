@@ -11,16 +11,19 @@ class UserModelTest(TestCase):
     """Tests for the custom User model"""
 
     def test_create_user(self):
+        # Check user is created with correct username and default role
         user = User.objects.create_user(username='alice', password='pass1234', email='alice@example.com')
         self.assertEqual(user.username, 'alice')
         self.assertEqual(user.role, 'user')
         self.assertTrue(user.check_password('pass1234'))
 
     def test_user_default_role_is_user(self):
+        # Default role should be 'user', not 'admin'
         user = User.objects.create_user(username='bob', password='pass1234')
         self.assertEqual(user.role, 'user')
 
     def test_user_str(self):
+        # __str__ should return the username
         user = User.objects.create_user(username='charlie', password='pass1234')
         self.assertEqual(str(user), 'charlie')
 
@@ -33,6 +36,7 @@ class CategoryModelTest(TestCase):
         self.assertEqual(str(cat), 'Chinese')
 
     def test_category_ordering(self):
+        # Categories should be ordered by sort_order ascending
         Category.objects.create(name='B Cat', sort_order=2)
         Category.objects.create(name='A Cat', sort_order=1)
         cats = list(Category.objects.all())
@@ -54,9 +58,11 @@ class ItemModelTest(TestCase):
         self.assertEqual(str(self.item), 'Spaghetti Carbonara')
 
     def test_item_default_avg_rating(self):
+        # avg_rating should be 0 before any ratings are submitted
         self.assertEqual(self.item.avg_rating, 0.0)
 
     def test_update_avg_rating(self):
+        # Two ratings of 4 and 2 should give an average of 3.0
         user1 = User.objects.create_user(username='u1', password='pass1234')
         user2 = User.objects.create_user(username='u2', password='pass1234')
         UserRating.objects.create(user=user1, item=self.item, rating=4)
@@ -65,6 +71,7 @@ class ItemModelTest(TestCase):
         self.assertEqual(self.item.avg_rating, 3.0)
 
     def test_update_avg_rating_no_ratings(self):
+        # avg_rating should fall back to 0 if no ratings exist
         self.item.update_avg_rating()
         self.assertEqual(self.item.avg_rating, 0.0)
 
@@ -83,6 +90,7 @@ class UserRatingModelTest(TestCase):
         self.assertEqual(str(rating), 'rater rated Sushi: 5')
 
     def test_unique_user_item_rating(self):
+        # A user cannot rate the same dish twice
         UserRating.objects.create(user=self.user, item=self.item, rating=4)
         from django.db import IntegrityError
         with self.assertRaises(IntegrityError):
@@ -102,6 +110,7 @@ class UserCollectionModelTest(TestCase):
         self.assertEqual(str(col), 'collector saved Tacos')
 
     def test_unique_collection(self):
+        # A user cannot save the same dish twice
         UserCollection.objects.create(user=self.user, item=self.item)
         from django.db import IntegrityError
         with self.assertRaises(IntegrityError):
@@ -142,6 +151,7 @@ class AuthViewTest(TestCase):
         self.assertContains(response, 'Log In')
 
     def test_register_creates_user(self):
+        # After successful registration, user should exist in the database
         response = self.client.post(reverse('register'), {
             'username': 'newuser',
             'email': 'new@example.com',
@@ -152,6 +162,7 @@ class AuthViewTest(TestCase):
         self.assertTrue(User.objects.filter(username='newuser').exists())
 
     def test_login_valid_user(self):
+        # Valid credentials should redirect to home
         User.objects.create_user(username='loginuser', password='TestPass@123')
         response = self.client.post(reverse('login'), {
             'username': 'loginuser',
@@ -160,6 +171,7 @@ class AuthViewTest(TestCase):
         self.assertEqual(response.status_code, 302)
 
     def test_login_invalid_user(self):
+        # Wrong credentials should stay on the login page
         response = self.client.post(reverse('login'), {
             'username': 'nobody',
             'password': 'wrongpass',
@@ -186,12 +198,14 @@ class DishViewTest(TestCase):
         self.assertContains(response, 'Pad Thai')
 
     def test_dish_search(self):
+        # Search by keyword should return matching dishes only
         Item.objects.create(name='Tom Yum Soup', category=self.category)
         response = self.client.get(reverse('dishes') + '?q=Tom')
         self.assertContains(response, 'Tom Yum Soup')
         self.assertNotContains(response, 'Pad Thai')
 
     def test_dish_filter_by_category(self):
+        # Filter by category should exclude dishes from other categories
         other_cat = Category.objects.create(name='Indian')
         Item.objects.create(name='Curry', category=other_cat)
         response = self.client.get(reverse('dishes') + f'?category={self.category.pk}')
@@ -207,6 +221,7 @@ class ProfileViewTest(TestCase):
         self.user = User.objects.create_user(username='profuser', password='pass1234')
 
     def test_profile_redirects_if_not_logged_in(self):
+        # Unauthenticated users should be redirected to login
         response = self.client.get(reverse('profile'))
         self.assertRedirects(response, '/login/?next=/profile/')
 
@@ -231,6 +246,7 @@ class RecommendationEngineTest(TestCase):
 
     def test_cold_start_returns_top_rated(self):
         """User with <2 ratings gets top-rated fallback"""
+        # If user has fewer than 2 ratings, fall back to top-rated dishes
         self.items[0].avg_rating = 4.5
         self.items[0].save()
         results = get_recommendations(self.user_a, limit=3)
@@ -241,7 +257,7 @@ class RecommendationEngineTest(TestCase):
         # user_a rates items 0-2
         for i in range(3):
             UserRating.objects.create(user=self.user_a, item=self.items[i], rating=4)
-        # user_b rates items 0-2 similarly + item 3 highly
+        # user_b rates items 0-2 similarly, plus item 3 with a high score
         for i in range(3):
             UserRating.objects.create(user=self.user_b, item=self.items[i], rating=4)
         UserRating.objects.create(user=self.user_b, item=self.items[3], rating=5)
@@ -249,6 +265,7 @@ class RecommendationEngineTest(TestCase):
         results = get_recommendations(self.user_a, limit=6)
         result_ids = [item.id for item in results]
         rated_ids = [self.items[i].id for i in range(3)]
+        # Already-rated dishes should not appear in recommendations
         for rid in rated_ids:
             self.assertNotIn(rid, result_ids)
 
@@ -269,6 +286,7 @@ class AjaxViewTest(TestCase):
         self.client.login(username='ajaxuser', password='pass1234')
 
     def test_toggle_collection_saves(self):
+        # First toggle should save the dish
         response = self.client.post(
             reverse('toggle_collection', args=[self.item.pk]),
             HTTP_X_REQUESTED_WITH='XMLHttpRequest'
@@ -279,6 +297,7 @@ class AjaxViewTest(TestCase):
         self.assertEqual(data['status'], 'saved')
 
     def test_toggle_collection_removes(self):
+        # Second toggle should remove the saved dish
         UserCollection.objects.create(user=self.user, item=self.item)
         response = self.client.post(reverse('toggle_collection', args=[self.item.pk]))
         import json
@@ -286,6 +305,7 @@ class AjaxViewTest(TestCase):
         self.assertEqual(data['status'], 'removed')
 
     def test_rate_dish_ajax(self):
+        # Valid rating should return status and updated avg_rating
         import json
         response = self.client.post(
             reverse('rate_dish_ajax', args=[self.item.pk]),
@@ -298,6 +318,7 @@ class AjaxViewTest(TestCase):
         self.assertEqual(data['avg_rating'], 4.0)
 
     def test_rate_dish_invalid_rating(self):
+        # Rating out of range (99) should return HTTP 400
         import json
         response = self.client.post(
             reverse('rate_dish_ajax', args=[self.item.pk]),

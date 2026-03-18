@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from .models import User, UserRating, ForumPost, ForumReply
 
-
+# Registration form
 class RegisterForm(UserCreationForm):
     email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={
         'class': 'form-control', 'placeholder': 'Email address'
@@ -20,7 +20,7 @@ class RegisterForm(UserCreationForm):
         self.fields['password1'].widget.attrs['placeholder'] = 'Password'
         self.fields['password2'].widget.attrs['placeholder'] = 'Confirm password'
 
-
+# Login form, extends AuthenticationForm with custom styles
 class LoginForm(AuthenticationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -31,11 +31,11 @@ class LoginForm(AuthenticationForm):
             'class': 'form-control', 'placeholder': 'Password'
         })
 
-
+# Rating form
 class RatingForm(forms.ModelForm):
     rating = forms.IntegerField(
         min_value=1, max_value=5,
-        widget=forms.HiddenInput()
+        widget=forms.HiddenInput() # Hidden input, value set by JS star widget
     )
     comment = forms.CharField(
         required=False,
@@ -49,7 +49,7 @@ class RatingForm(forms.ModelForm):
         model = UserRating
         fields = ('rating', 'comment')
 
-
+# Forum post form
 class ForumPostForm(forms.ModelForm):
     class Meta:
         model = ForumPost
@@ -59,7 +59,7 @@ class ForumPostForm(forms.ModelForm):
             'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'Share your dining experience...'}),
         }
 
-
+# Forum reply form
 class ForumReplyForm(forms.ModelForm):
     class Meta:
         model = ForumReply
@@ -68,7 +68,7 @@ class ForumReplyForm(forms.ModelForm):
             'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Write a reply...'}),
         }
 
-
+# Profile edit form, allows updating name, email and avatar
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = User
